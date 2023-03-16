@@ -1,5 +1,5 @@
 const express = require("express");
-const { pool } = require("./dbConfig");
+const {pool} = require("./dbConfig");
 const bcrypt = require("bcrypt");
 const passport = require("passport");
 const flash = require("express-flash");
@@ -7,7 +7,9 @@ const session = require("express-session");
 require("dotenv").config();
 const app = express();
 
-const PORT = process.env.PORT || 4000;
+const PORT = process.env.PORT || 3020;
+
+
 
 const initializePassport = require("./passportConfig");
 
@@ -54,6 +56,10 @@ app.get("/users/dashboard", checkNotAuthenticated, (req, res) => {
   res.render("dashboard", { user: req.user.name });
 });
 
+app.get("/users/forgetPassword",checkAuthenticated, (req, res) => {
+  res.render("forgetPassword");
+});
+
 app.get("/users/logout", (req, res) => {
   req.logout();
   res.render("index", { message: "You have logged out successfully" });
@@ -75,9 +81,9 @@ app.post("/users/register", async (req, res) => {
     errors.push({ message: "Please enter all fields" });
   }
 
-  if (password.length < 6) {
+  /*if (password.length < 6) {
     errors.push({ message: "Password must be a least 6 characters long" });
-  }
+  }*/
 
   if (password !== password2) {
     errors.push({ message: "Passwords do not match" });
@@ -88,12 +94,20 @@ app.post("/users/register", async (req, res) => {
   } else {
     hashedPassword = await bcrypt.hash(password, 10);
     console.log(hashedPassword);
+
+    
+    // const res = await pool.query(`SELECT * FROM users`);
+        //await client.query('INSERT INTO users values(102,\'raj\',\'raj456@gmail.com\',\'123456\')')
+    
+
+    const select_query = `SELECT * FROM users WHERE email = $1;`;
+    const insert_query = `INSERT INTO users (name, email, password) VALUES ($1, $2, $3) RETURNING id, password;`;
+
+    console.log(res)
     // Validation passed
-    pool.query(
-      `SELECT * FROM users
-        WHERE email = $1`,
+    pool.query(select_query,
       [email],
-      (err, results) => {
+       (err, results) => {
         if (err) {
           console.log(err);
         }
@@ -104,12 +118,10 @@ app.post("/users/register", async (req, res) => {
             message: "Email already registered"
           });
         } else {
-          pool.query(
-            `INSERT INTO users (name, email, password)
-                VALUES ($1, $2, $3)
-                RETURNING id, password`,
-            [name, email, hashedPassword],
-            (err, results) => {
+           pool.query(
+            insert_query,
+            [name, email, password],
+             (err, results) => {
               if (err) {
                 throw err;
               }
@@ -132,6 +144,25 @@ app.post(
     failureFlash: true
   })
 );
+
+app.put("/users/forgetPassword",  (req, res) => {
+
+  let { email, password, password2 } = req.body;
+    console.log(email);
+    console.log(password);
+    const update_query = `UPDATE users SET password = $1 WHERE email = $2`;`;
+
+    
+    pool.query(update_query,
+       (err, results) => {
+        if (err) {
+          console.log(err);
+        }
+        //console.log(results.rows);
+
+      });   
+      res.redirect("/users/login"); 
+});
 
 function checkAuthenticated(req, res, next) {
   if (req.isAuthenticated()) {
