@@ -6,7 +6,7 @@ This is a simple login and signup application using nodeJS and expressJS.
 <b>Make sure you have Node.js and PostgreSQL installed.</b>
 <br>
 <br>
-git clone https://github.com/yusufsefasezer/nodejs-register-login.git <br>
+git clone https://github.com/rajpatel2001/login.git <br>
 cd node-js-passport-login-postgresql <br>
 npm install <br>
 </p>
